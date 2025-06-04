@@ -1,0 +1,61 @@
+---
+- name: Install pyOpenSSL and certbot from pip
+  ansible.builtin.pip:
+    name:
+      - pyopenssl
+      - certbot
+      - certbot-nginx
+    state: latest
+
+- name: Create a symbolic link for the certbot script
+  ansible.builtin.file:
+    src: /usr/local/bin/certbot
+    dest: /bin/certbot
+    state: link
+
+# If this fails check out status of certbot: https://letsencrypt.status.io/
+- name: issue certificate (Let's Encrypt)
+  when: certbot_cert_manager_provider != 'zerossl'
+  ansible.builtin.command: >
+    certbot certonly
+    --nginx
+    -d {{ letsencrypt_cert_hostname }}
+    --email {{ letsencrypt_cert_encrypt_mail }}
+    --noninteractive
+    --agree-tos
+  register: issue_cert
+  until: issue_cert is not failed
+  retries: 5
+
+# If this fails check out status of certbot: https://letsencrypt.status.io/
+- name: issue certificate (ZeroSSL)
+  when: certbot_cert_manager_provider == 'zerossl'
+  ansible.builtin.command: >
+    certbot certonly --nginx
+    --eab-kid "{{ certbot_cert_manager_zerossl_eab_key_id }}"
+    --eab-hmac-key "{{ certbot_cert_manager_zerossl_hmac_key }}"
+    --server "{{ certbot_cert_manager_acme_url }}"
+    -d {{ letsencrypt_cert_hostname }}
+    --email {{ letsencrypt_cert_encrypt_mail }}
+    --noninteractive --agree-tos
+  register: issue_cert
+  until: issue_cert is not failed
+  retries: 5
+
+- name: Copy letsencrypt key
+  when: letsencrypt_cert_dest_private_key is defined
+  ansible.builtin.copy:
+    src: /etc/letsencrypt/live/{{ letsencrypt_cert_hostname }}/privkey.pem
+    dest: "{{ letsencrypt_cert_dest_private_key }}"
+    remote_src: true
+    owner: "{{ letsencrypt_cert_owner }}"
+    mode: 0644
+
+- name: Copy letsencrypt certificate
+  when: letsencrypt_cert_dest_fullchain_crt is defined
+  ansible.builtin.copy:
+    src: /etc/letsencrypt/live/{{ letsencrypt_cert_hostname }}/fullchain.pem
+    dest: "{{ letsencrypt_cert_dest_fullchain_crt }}"
+    remote_src: true
+    owner: "{{ letsencrypt_cert_owner }}"
+    mode: 0644
