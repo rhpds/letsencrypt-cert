@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: letsencrypt_cert
+  author: Mitesh Sharma (mitsharm@redhat.com)
+  description: ZeroSSl and Let's Encrypt cert
+  license: GPLv3
+  min_ansible_version: "2.9"
+  platforms: []
+  galaxy_tags:
+  - zerossl
+  - letsencrypt
+dependencies: []
