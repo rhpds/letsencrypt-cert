@@ -48,7 +48,7 @@
     src: /etc/letsencrypt/live/{{ letsencrypt_cert_hostname }}/privkey.pem
     dest: "{{ letsencrypt_cert_dest_private_key }}"
     remote_src: true
-    owner: "{{ letsencrypt_cert_owner }}"
+    owner: "{{ letsencrypt_cert_owner | default(omit) }}"
     mode: 0644
 
 - name: Copy letsencrypt certificate
@@ -57,5 +57,5 @@
     src: /etc/letsencrypt/live/{{ letsencrypt_cert_hostname }}/fullchain.pem
     dest: "{{ letsencrypt_cert_dest_fullchain_crt }}"
     remote_src: true
-    owner: "{{ letsencrypt_cert_owner }}"
+    owner: "{{ letsencrypt_cert_owner | default(omit) }}"
     mode: 0644
